@@ -571,40 +571,40 @@ in<!DOCTYPE html>
         <div class="order-form">
             <h2 style="text-align: center; margin-bottom: 25px; color: #28a745;">📝 Поръчай сега</h2>
             
-            <form id="orderForm">
+            <form id="orderForm" action="https://formspree.io/f/maqnrkqv" method="POST">
                 <div class="form-group">
                     <label>Име и фамилия *</label>
-                    <input type="text" id="name" required placeholder="Иван Иванов">
+                    <input type="text" name="name" id="name" required placeholder="Иван Иванов">
                 </div>
                 
                 <div class="form-group">
                     <label>Телефон *</label>
-                    <input type="tel" id="phone" required placeholder="0888 123 456">
+                    <input type="tel" name="phone" id="phone" required placeholder="0888 123 456">
                 </div>
                 
                 <div class="form-group">
                     <label>Email *</label>
-                    <input type="email" id="email" required placeholder="email@example.com">
+                    <input type="email" name="email" id="email" required placeholder="email@example.com">
                 </div>
                 
                 <div class="form-group">
                     <label>Град *</label>
-                    <input type="text" id="city" required placeholder="София">
+                    <input type="text" name="city" id="city" required placeholder="София">
                 </div>
                 
                 <div class="form-group">
                     <label>Адрес за доставка *</label>
-                    <input type="text" id="address" required placeholder="ул. Витоша 15">
+                    <input type="text" name="address" id="address" required placeholder="ул. Витоша 15">
                 </div>
                 
                 <div class="form-group">
                     <label>Начин на доставка *</label>
-                    <select id="delivery" required>
+                    <select name="delivery" id="delivery" required>
                         <option value="">Избери...</option>
-                        <option value="speedy">Speedy до адрес</option>
-                        <option value="speedy-office">Speedy до офис</option>
-                        <option value="econt">Econt до адрес</option>
-                        <option value="econt-office">Econt до офис</option>
+                        <option value="Speedy до адрес">Speedy до адрес</option>
+                        <option value="Speedy до офис">Speedy до офис</option>
+                        <option value="Econt до адрес">Econt до адрес</option>
+                        <option value="Econt до офис">Econt до офис</option>
                     </select>
                 </div>
                 
@@ -612,9 +612,124 @@ in<!DOCTYPE html>
                     <label>Количество</label>
                     <div class="quantity-selector">
                         <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">-</button>
-                        <input type="number" id="quantity" class="quantity-input" value="3" min="1" readonly>
+                        <input type="number" name="quantity" id="quantity" class="quantity-input" value="3" min="1" readonly>
                         <button type="button" class="quantity-btn" onclick="changeQuantity(1)">+</button>
                     </div>
                     <div style="font-size: 13px; color: #666; margin-top: 8px;">
                         Избран пакет: <span id="selectedPackage">3 опаковки</span>
+                    </div>
+                </div>
+                
+                <!-- Скрити полета за изпращане на цената -->
+                <input type="hidden" name="total_lv" id="hiddenTotalLv" value="142.00">
+                <input type="hidden" name="total_euro" id="hiddenTotalEuro" value="72.60">
+                <input type="hidden" name="package_description" id="hiddenPackage" value="3 опаковки (БЕЗПЛАТНА ДОСТАВКА)">
+                
+                <div class="total-price">
+                    Обща сума: <span id="totalPrice">142.00</span> лв 
+                    (<span id="totalPriceEuro">72.60</span> €)
+                </div>
+                
+                <button type="submit" class="cta-button">
+                    🛒 ЗАВЪРШИ ПОРЪЧКАТА
+                </button>
+            </form>
+            
+            <div class="success-message" id="successMessage">
+                <h3>✅ Благодарим за поръчката!</h3>
+                <p>Ще се свържем с вас в рамките на 24 часа за потвърждение.</p>
+            </div>
+        </div>
+        
+        <p class="disclaimer">
+            *Хранителна добавка. Не е лекарствен продукт. Не заменя разнообразното и балансирано хранене.
+        </p>
+    </div>
     
+    <script>
+        let currentPackageQuantity = 3;
+        let currentPackagePrice = 142;
+        
+        const pricing = {
+            1: { lv: 58, euro: 29.65 },
+            3: { lv: 142, euro: 72.60 }
+        };
+        
+        function selectPackage(quantity, price) {
+            currentPackageQuantity = quantity;
+            currentPackagePrice = price;
+            
+            // Премахване на selected от всички опции
+            document.querySelectorAll('.package-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Добавяне на selected на избраната опция
+            event.currentTarget.classList.add('selected');
+            
+            // Обновяване на формата
+            document.getElementById('quantity').value = quantity;
+            updateTotal();
+        }
+        
+        function changeQuantity(change) {
+            const quantityInput = document.getElementById('quantity');
+            let currentQuantity = parseInt(quantityInput.value);
+            let newQuantity = currentQuantity + change;
+            
+            if (newQuantity < 1) newQuantity = 1;
+            if (newQuantity > 10) newQuantity = 10;
+            
+            // Автоматично превключване на пакети
+            if (newQuantity === 1) {
+                currentPackageQuantity = 1;
+                currentPackagePrice = 58;
+            } else if (newQuantity === 3) {
+                currentPackageQuantity = 3;
+                currentPackagePrice = 142;
+            }
+            
+            quantityInput.value = newQuantity;
+            updateTotal();
+        }
+        
+        function updateTotal() {
+            const quantity = parseInt(document.getElementById('quantity').value);
+            let totalLv, totalEuro, packageText;
+            
+            if (quantity === 1) {
+                totalLv = pricing[1].lv;
+                totalEuro = pricing[1].euro;
+                packageText = '1 опаковка';
+            } else if (quantity === 3) {
+                totalLv = pricing[3].lv;
+                totalEuro = pricing[3].euro;
+                packageText = '3 опаковки (БЕЗПЛАТНА ДОСТАВКА)';
+            } else {
+                // За други количества използваме единична цена
+                totalLv = pricing[1].lv * quantity;
+                totalEuro = pricing[1].euro * quantity;
+                packageText = quantity + ' опаковки';
+            }
+            
+            document.getElementById('totalPrice').textContent = totalLv.toFixed(2);
+            document.getElementById('totalPriceEuro').textContent = totalEuro.toFixed(2);
+            document.getElementById('selectedPackage').textContent = packageText;
+            
+            // Обновяване на скритите полета за Formspree
+            document.getElementById('hiddenTotalLv').value = totalLv.toFixed(2);
+            document.getElementById('hiddenTotalEuro').value = totalEuro.toFixed(2);
+            document.getElementById('hiddenPackage').value = packageText;
+        }
+        
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            // Формата се изпраща автоматично към Formspree
+            // Показваме съобщение за успех след изпращане
+            setTimeout(() => {
+                document.getElementById('orderForm').style.display = 'none';
+                document.getElementById('successMessage').classList.add('show');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
